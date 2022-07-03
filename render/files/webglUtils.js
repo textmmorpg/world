@@ -353,8 +353,7 @@ function loadTexture(gl, url, repeat, callback)
 
     // create new image and load it from URL
     let imageName = url.substring(url.lastIndexOf("/")+1);
-    let image = new Image();
-    image.crossOrigin = "anonymous | use-credentials";
+    let image = new Image(crossOrigin="anonymous");
     image.src = url;
     image.onload = function()
     {
@@ -388,7 +387,7 @@ function loadNormalmap(gl, url, repeat, callback)
     setupDefaultTexture(gl, texture, TextureType.NORMALMAP);
 
     // create new image and load it from URL
-    let image = new Image();
+    let image = new Image(crossOrigin="anonymous");
     image.src = url;
     image.onload = function()
     {
@@ -422,7 +421,7 @@ function loadOcclusionmap(gl, url, repeat, callback)
     setupDefaultTexture(gl, texture, TextureType.OCCLUSIONMAP);
 
     // create new image and load it from URL
-    let image = new Image();
+    let image = new Image(crossOrigin="anonymous");
     image.src = url;
     image.onload = function()
     {
