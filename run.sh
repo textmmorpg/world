@@ -1,2 +1,2 @@
-python3.6 main.py
+python3.7 main.py
 node render/render.js
