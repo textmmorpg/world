@@ -340,8 +340,6 @@ function initVertexAttribArrays(gl)
     }
 }
 
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // load texture asynchronously, and return OpenGL texture object
 ///////////////////////////////////////////////////////////////////////////////
@@ -353,7 +351,7 @@ function loadTexture(gl, url, repeat, callback)
 
     // create new image and load it from URL
     let imageName = url.substring(url.lastIndexOf("/")+1);
-    let image = new Image(crossOrigin="anonymous");
+    var image = new Image(crossOrigin="anonymous");
     image.src = url;
     image.onload = function()
     {
