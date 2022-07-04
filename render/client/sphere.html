@@ -939,76 +939,79 @@ function startRendering(gl)
 ///////////////////////////////////////////////////////////////////////////////
 function initHtmlElements()
 {
-    let rangeRadius = document.getElementById("rangeRadius");
-    let labelRadius = document.getElementById("labelRadius");
-    rangeRadius.value = 1;
-    rangeRadius.addEventListener("input", event =>
-    {
-        labelRadius.innerHTML = rangeRadius.value;
-        gl.sphere.setRadius(parseFloat(rangeRadius.value));
-        printSphere();
-    });
+    // let rangeRadius = document.getElementById("rangeRadius");
+    // let labelRadius = document.getElementById("labelRadius");
+    // rangeRadius.value = 1;
+    // rangeRadius.addEventListener("input", event =>
+    // {
+    //     labelRadius.innerHTML = rangeRadius.value;
+    //     gl.sphere.setRadius(parseFloat(rangeRadius.value));
+    //     printSphere();
+    // });
 
-    let rangeSector = document.getElementById("rangeSector");
-    let labelSector = document.getElementById("labelSector");
-    rangeSector.value = 36;
-    rangeSector.addEventListener("input", event =>
-    {
-        labelSector.innerHTML = rangeSector.value;
-        gl.sphere.setSectorCount(parseFloat(rangeSector.value));
-        printSphere();
-    });
+    // let rangeSector = document.getElementById("rangeSector");
+    // let labelSector = document.getElementById("labelSector");
+    // rangeSector.value = 36;
+    // rangeSector.addEventListener("input", event =>
+    // {
+    //     labelSector.innerHTML = rangeSector.value;
+    //     gl.sphere.setSectorCount(parseFloat(rangeSector.value));
+    //     printSphere();
+    // });
 
-    let rangeStack = document.getElementById("rangeStack");
-    let labelStack = document.getElementById("labelStack");
-    rangeStack.value = 18;
-    rangeStack.addEventListener("input", event =>
-    {
-        labelStack.innerHTML = rangeStack.value;
-        gl.sphere.setStackCount(parseFloat(rangeStack.value));
-        printSphere();
-    });
+    // let rangeStack = document.getElementById("rangeStack");
+    // let labelStack = document.getElementById("labelStack");
+    // rangeStack.value = 18;
+    // rangeStack.addEventListener("input", event =>
+    // {
+    //     labelStack.innerHTML = rangeStack.value;
+    //     gl.sphere.setStackCount(parseFloat(rangeStack.value));
+    //     printSphere();
+    // });
 
-    let checkTexture = document.getElementById("checkTexture");
-    checkTexture.checked = false;
-    checkTexture.addEventListener("click", event =>
-    {
-        gl.textureEnabled = checkTexture.checked;
-    });
+    // let checkTexture = document.getElementById("checkTexture");
+    // checkTexture.checked = true;
+    // checkTexture.addEventListener("click", event =>
+    // {
+    //     checkTexture.checked;
+    // });
+    gl.textureEnabled = true;
 
-    let checkWireframe = document.getElementById("checkWireframe");
-    checkWireframe.checked = false;
-    checkWireframe.addEventListener("click", event =>
-    {
-        gl.wireframeEnabled = checkWireframe.checked;
-    });
+    // let checkWireframe = document.getElementById("checkWireframe");
+    // checkWireframe.checked = false;
+    // checkWireframe.addEventListener("click", event =>
+    // {
+    //      = checkWireframe.checked;
+    // });
+    gl.wireframeEnabled = false;
 
-    let checkSmooth = document.getElementById("checkSmooth");
-    checkSmooth.checked = false;
-    checkSmooth.addEventListener("click", event =>
-    {
-        gl.sphere.setSmooth(checkSmooth.checked);
-        printSphere();
-    });
+    // let checkSmooth = document.getElementById("checkSmooth");
+    // checkSmooth.checked = true;
+    // checkSmooth.addEventListener("click", event =>
+    // {
+    //     printSphere();
+    // });
+    gl.sphere.setSmooth(true);
+    printSphere()
 
-    let buttonReset = document.getElementById("buttonReset");
-    buttonReset.addEventListener("click", event =>
-    {
-        gl.sphere.set(1, 36, 18, false);
-        rangeRadius.value = 1;
-        labelRadius.innerHTML = 1;
-        rangeSector.value = 36;
-        labelSector.innerHTML = 36;
-        rangeStack.value = 18;
-        labelStack.innerHTML = 18;
-        checkTexture.checked = false;
-        checkWireframe.checked = false;
-        checkSmooth.checked = false;
-        gl.textureEnabled = false;
-        gl.wireframeEnabled = false;
-        resetCamera();
-        printSphere();
-    });
+    // let buttonReset = document.getElementById("buttonReset");
+    // buttonReset.addEventListener("click", event =>
+    // {
+    //     gl.sphere.set(1, 36, 18, false);
+    //     rangeRadius.value = 1;
+    //     labelRadius.innerHTML = 1;
+    //     rangeSector.value = 36;
+    //     labelSector.innerHTML = 36;
+    //     rangeStack.value = 18;
+    //     labelStack.innerHTML = 18;
+    //     checkTexture.checked = false;
+    //     checkWireframe.checked = false;
+    //     checkSmooth.checked = false;
+    //     gl.textureEnabled = false;
+    //     gl.wireframeEnabled = false;
+    //     resetCamera();
+    //     printSphere();
+    // });
 }
 
 
@@ -1045,7 +1048,7 @@ function printSphere()
 <div class="mainblock">
 <canvas id="webglView" width="1571" height="897">
 </canvas>
-<pre id="info">===== Sphere =====
+<!-- <pre id="info">===== Sphere =====
         Radius: 1
   Sector Count: 36
    Stack Count: 18
@@ -1055,10 +1058,10 @@ Triangle Count: 1224
   Vertex Count: 2520
   Normal Count: 2520
 TexCoord Count: 2520
-</pre>
+</pre> -->
 </div>
 
-<div class="rightblock">
+<!-- <div class="rightblock">
 <h2>
 Sphere
 </h2>
@@ -1084,18 +1087,18 @@ Sphere
 <div style="display:flex;align-items:center;">
 <input id="rangeStack" class="slider" type="range" min="2" max="100" step="1" value="18" style="flex:1;"><label id="labelStack" style="flex:0 0 2em;margin-left:5px;">18</label>
 </div>
-</div>
+</div> -->
 
-<div>
+<!-- <div>
 <label><input style="margin-bottom:10px;" type="checkbox" id="checkTexture">Show Texture</label>
 <br>
 <label><input style="margin-bottom:10px;" type="checkbox" id="checkWireframe">Show Wireframe</label>
 <br>
 <label><input style="margin-bottom:10px;" type="checkbox" id="checkSmooth">Smooth Shading</label>
 </div>
-<br>
-
-<button type="reset" id="buttonReset" style="width:100%; padding:5px;">Reset</button>
+<br> -->
+<!-- 
+<button type="reset" id="buttonReset" style="width:100%; padding:5px;">Reset</button> -->
 
 </div>
 <!-- end of rightblock -->
