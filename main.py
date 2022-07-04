@@ -19,21 +19,13 @@ def colorHex(value):
         return ['03', '00', '7B'] # deep water
     elif value < 0.075:
         return ['66', '63', 'FF'] # shallow water
-    else:
-        value = value - 0.075 # make lowest value 0
-        value *= 10 # between 0 and 1
-        value *= 0.5 # reduce max val
-        value *= 256 # convert to color range 0 to 256
-
-        # return [str(hex(int(value))).replace('0x','')[:2], '00', '00']
-
-    if value < 25:
+    elif value < 0.08:
         return ['BF', 'BA', '07'] # beach
-    elif value < 115:
+    elif value < 0.125:
         return ['07', 'A8', '04'] # field
-    elif value < 170:
+    elif value < 0.175:
         return ['0B', '5B', '02'] # forest
-    elif value < 225:
+    elif value < 0.2:
         return ['78', '7A', '6B'] # stone
     else:
         return ['F8', 'F8', 'F8'] # snowwy mountain top
