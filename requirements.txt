@@ -2,3 +2,4 @@ matplotlib
 numpy
 pillow
 perlin_noise
+pandas
