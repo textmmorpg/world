@@ -6,11 +6,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 size_x, size_y = 512, 512
-height_noise = PerlinNoise(octaves=3)
+height_noise = PerlinNoise(octaves=6)
 temperature_noise = PerlinNoise(octaves=6)
 precipitation_noise = PerlinNoise(octaves=6)
 
-def make_df() -> pd.DataFrame:
+def init_df() -> pd.DataFrame:
     df = pd.DataFrame(
         columns = [
             'x', 
@@ -36,45 +36,30 @@ def make_df() -> pd.DataFrame:
     print('adding temperature noise')
     df['temperature'] = df.apply(lambda row: precipitation_noise([row['x']/size_x, row['y']/size_y]), axis=1)
 
+    # normalizing range values
+    update_range = lambda val, old_min, old_max, new_min, new_max: (((val - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
+
+    print('normalizing ranges')
+    df['height'] = df.apply(lambda row: update_range(row['height'], -0.7, 0.7, -11000, 9000), axis=1)
+    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], -0.7, 0.7, 0, 500), axis=1)
+    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], -0.7, 0.7, -10, 30), axis=1)
+
     # set is_land
     print('setting is_land')
-    df['is_land'] = df.apply(lambda row: row['height'] > 0.8, axis=1)
+    df['is_land'] = df.apply(lambda row: row['height'] > 0, axis=1)
 
     # save
     df.to_pickle('world_data.pickle')
     return df
 
+# df = init_df()
 df = pd.read_pickle('world_data.pickle')
-df.hist(bins=10)
+# print(df)
+# df = normalize(df)
+
+# df.hist(bins=10)
+df.loc[df['is_land']].hist(bins=10)
 plt.show()
-
-# def get_biome(temperature: float, precipitation: float) -> str:
-#     pass
-
-# def add_noise(df: pd.DataFrame) -> pd.DataFrame:
-#     """Initialize 2D array of perlin noise for each cell"""
-#     for x in range(xpix):
-#         for y in range(ypix):
-
-#             height = height_noise([x/xpix, y/ypix])
-#             precipitation = precipitation_noise([x/xpix, y/ypix])
-#             temperature = temperature_noise([x/xpix, y/ypix])
-
-#             df.append({
-#                 'x': x,
-#                 'y': y,
-#                 'height': height,
-#                 'precipitation': precipitation, 
-#                 'temperature': temperature,
-#                 'is_land': height > 0.08,
-#                 'biome': get_biome(temperature, precipitation)
-#             }, ignore_index=True)
-    
-#     return df
-
-# df = add_noise(df)
-# df.read_pickle('world_data.pickle')
-# df['height', 'precipitation', 'temperature'].hist(bins=10)
 
 # def colorHex(value):
 #     """Get a color based on height"""
@@ -92,10 +77,6 @@ plt.show()
 #         return ['78', '7A', '6B'] # stone
 #     else:
 #         return ['F8', 'F8', 'F8'] # snowwy mountain top
-
-# Graph perlin noise values to get an idea of the distribution
-# plt.hist(noise_vals, bins=20, histtype = 'bar', facecolor = 'blue')
-# plt.show()
 
 # write the results to an image
 # np_data = np.array(height_map)
