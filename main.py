@@ -10,6 +10,40 @@ height_noise = PerlinNoise(octaves=6)
 temperature_noise = PerlinNoise(octaves=6)
 precipitation_noise = PerlinNoise(octaves=6)
 
+def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
+    # https://upload.wikimedia.org/wikipedia/commons/6/68/Climate_influence_on_terrestrial_biome.svg
+    if not is_land:
+        return 'ocean'
+    
+    if temperature < 0:
+        return 'tundra'
+    
+    if temperature < 10 and precipitation > 50:
+        return 'boreal forest'
+    
+    if temperature < 10:
+        return 'grassland'
+
+    if temperature < 20 and precipitation > 200:
+        return 'temperate rainforest'
+    
+    if temperature < 20 and precipitation > 100:
+        return 'seasonal forest'
+    
+    if temperature < 20 and precipitation > 50:
+        return 'woodland'
+    
+    if temperature < 20:
+        return 'grassland'
+    
+    if precipitation > 250:
+        return 'tropical rainforest'
+    
+    if precipitation > 50:
+        return 'savanna'
+    
+    return 'desert'
+
 def init_df() -> pd.DataFrame:
     df = pd.DataFrame(
         columns = [
@@ -54,11 +88,9 @@ def init_df() -> pd.DataFrame:
 
 # df = init_df()
 df = pd.read_pickle('world_data.pickle')
-# print(df)
-# df = normalize(df)
+df["biome"] = df.apply(lambda row: get_biome(row['is_land'], row['temperature'], row['precipitation']), axis=1)
 
-# df.hist(bins=10)
-df.loc[df['is_land']].hist(bins=10)
+print(df[df['is_land']].biome.value_counts())
 plt.show()
 
 # def colorHex(value):
