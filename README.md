@@ -5,6 +5,7 @@ Procedural world generation
 
 ```
 pip install -r requirements.txt
+npm install
 ```
 
 ## Credits
