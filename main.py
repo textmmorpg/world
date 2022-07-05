@@ -15,13 +15,19 @@ precipitation_noise = PerlinNoise(octaves=6)
 update_range = lambda val, old_min, old_max, new_min, new_max: (((val - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
 
 # get closeness to equator
-def equator_temp(y: int, temperature: float) -> float:
+def equator_temp(x: int) -> float:
     """needs to consider negative temps"""
-    equator = size_y/2
-    percent = (y % equator) / equator
-    category = percent / 10
-    bonus = category * 1.5
-    return -5 + bonus
+    equator = size_x / 2
+    percent = x / equator if x < equator else (size_x - x)/equator
+    category = percent * 10
+    bonus = category * 3
+    return -15 + bonus
+
+def add_beach(biome: str, height: float) -> str:
+    if 'forest' in biome and height < 150:
+        return 'beach'
+    
+    return biome
 
 def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
     # https://upload.wikimedia.org/wikipedia/commons/6/68/Climate_influence_on_terrestrial_biome.svg
@@ -63,10 +69,11 @@ biome_color = {
     'boreal forest': '4f772d',
     'grassland': '90a955',
     'temperate rainforest': '31572c',
-    'seasonal forest': '90a955',
-    'woodland': '90a955',
+    'seasonal forest': '606c38',
+    'woodland': '283618',
     'tropical rainforest': '132a13',
-    'savanna': 'bb9457'
+    'savanna': 'bb9457',
+    'beach': 'e9c46a'
 }
 
 def init_df() -> pd.DataFrame:
@@ -101,19 +108,23 @@ def init_df() -> pd.DataFrame:
     df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], -0.7, 0.7, 0, 500), axis=1)
     df['temperature'] = df.apply(lambda row: update_range(row['temperature'], -0.7, 0.7, -10, 30), axis=1)
     
-    print('temperature tweaks')
+    print('checking the temperature')
     # update temperature based on latitude
-    df['temperature'] = df.apply(lambda row: row['temperature'] + equator_temp(row['y'], row['temperature']), axis=1)
+    df['temperature'] = df.apply(lambda row: row['temperature'] + equator_temp(row['x']), axis=1)
     # update temperature based on height
     df['temperature'] = df.apply(lambda row: row['temperature'] - row['height']/2000, axis=1)
 
     # set is_land
-    print('setting is_land')
+    print('finding land')
     df['is_land'] = df.apply(lambda row: row['height'] > 0, axis=1)
 
     # set biome
     print('setting biome')
     df["biome"] = df.apply(lambda row: get_biome(row['is_land'], row['temperature'], row['precipitation']), axis=1)
+
+    # add beaches
+    print('going to the beach')
+    df['biome'] = df.apply(lambda row: add_beach(row['biome'], row['height']), axis=1)
 
     # set color
     print('setting color')
