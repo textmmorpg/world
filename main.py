@@ -44,6 +44,18 @@ def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
     
     return 'desert'
 
+biome_color = {
+    'ocean': '#003049',
+    'tundra': '#669bbc',
+    'boreal forest': '#4f772d',
+    'grassland': '#90a955',
+    'temperate rainforest': '#31572c',
+    'seasonal forest': '#90a955',
+    'woodland': '#90a955',
+    'tropical rainforest': '#132a13',
+    'savanna': '#bb9457'
+}
+
 def init_df() -> pd.DataFrame:
     df = pd.DataFrame(
         columns = [
@@ -54,6 +66,7 @@ def init_df() -> pd.DataFrame:
             'temperature',
             'is_land',
             'biome',
+            'color'
         ]
     )
 
@@ -78,39 +91,31 @@ def init_df() -> pd.DataFrame:
     df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], -0.7, 0.7, 0, 500), axis=1)
     df['temperature'] = df.apply(lambda row: update_range(row['temperature'], -0.7, 0.7, -10, 30), axis=1)
 
+    # TODO: update temperature based on height and latitude
+
     # set is_land
     print('setting is_land')
     df['is_land'] = df.apply(lambda row: row['height'] > 0, axis=1)
+
+    # set biome
+    print('setting biome')
+    df["biome"] = df.apply(lambda row: get_biome(row['is_land'], row['temperature'], row['precipitation']), axis=1)
+
+    # set color
+    print('setting color')
+    df["color"] = df.apply(lambda row: biome_color[row['biome']], axis=1)
 
     # save
     df.to_pickle('world_data.pickle')
     return df
 
-# df = init_df()
-df = pd.read_pickle('world_data.pickle')
-df["biome"] = df.apply(lambda row: get_biome(row['is_land'], row['temperature'], row['precipitation']), axis=1)
+df = init_df()
+# df = pd.read_pickle('world_data.pickle')
 
-print(df[df['is_land']].biome.value_counts())
-plt.show()
+# image_data = []
 
-# def colorHex(value):
-#     """Get a color based on height"""
-#     if value < 0:
-#         return ['03', '00', '7B'] # deep water
-#     elif value < 0.075:
-#         return ['66', '63', 'FF'] # shallow water
-#     elif value < 0.08:
-#         return ['BF', 'BA', '07'] # beach
-#     elif value < 0.125:
-#         return ['07', 'A8', '04'] # field
-#     elif value < 0.175:
-#         return ['0B', '5B', '02'] # forest
-#     elif value < 0.2:
-#         return ['78', '7A', '6B'] # stone
-#     else:
-#         return ['F8', 'F8', 'F8'] # snowwy mountain top
 
-# write the results to an image
+# # write the results to an image
 # np_data = np.array(height_map)
 # im = Image.fromarray(np_data.astype(np.uint8))
 # im.save("./render/client/images/grid512.jpg")
