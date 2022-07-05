@@ -2,73 +2,151 @@ from PIL import Image
 import numpy as np
 from random import random
 from perlin_noise import PerlinNoise
+import pandas as pd
 import matplotlib.pyplot as plt
+import tqdm
 
-noise1 = PerlinNoise(octaves=3)
-noise2 = PerlinNoise(octaves=6)
-noise3 = PerlinNoise(octaves=12)
-noise4 = PerlinNoise(octaves=24)
+size_x, size_y = 512*2, 512*2
+height_noise = PerlinNoise(octaves=6)
+temperature_noise = PerlinNoise(octaves=6)
+precipitation_noise = PerlinNoise(octaves=6)
 
-xpix, ypix = 512, 512
+# normalizing range values
+update_range = lambda val, old_min, old_max, new_min, new_max: (((val - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
 
-data = []
-noise_vals = []
+# get closeness to equator
+def equator_temp(x: int) -> float:
+    """needs to consider negative temps"""
+    equator = size_x / 2
+    percent = x / equator if x < equator else (size_x - x)/equator
+    category = percent * 10
+    bonus = category * 3
+    return -15 + bonus
 
-def colorHex(value):
-    if value < 0:
-        return ['03', '00', '7B'] # deep water
-    elif value < 0.075:
-        return ['66', '63', 'FF'] # shallow water
-    else:
-        value = value - 0.075 # make lowest value 0
-        value *= 10 # between 0 and 1
-        value *= 0.5 # reduce max val
-        value *= 256 # convert to color range 0 to 256
-
-        # return [str(hex(int(value))).replace('0x','')[:2], '00', '00']
-
-    if value < 25:
-        return ['BF', 'BA', '07'] # beach
-    elif value < 115:
-        return ['07', 'A8', '04'] # field
-    elif value < 170:
-        return ['0B', '5B', '02'] # forest
-    elif value < 225:
-        return ['78', '7A', '6B'] # stone
-    else:
-        return ['F8', 'F8', 'F8'] # snowwy mountain top
-
-
-def add_noise(data):
-    for x in range(xpix):
-        data.append([])
-        for y in range(ypix):
-            data[x].append([])
-            
-            val = 0.5 * noise1([x/xpix, y/ypix])
-            val += 0.25 * noise2([x/xpix, y/ypix])
-            val += 0.125 * noise3([x/xpix, y/ypix])
-            val += 0.125 * noise4([x/xpix, y/ypix])
-
-            # noise_vals.append(val)
-            color = colorHex(val)
-
-            data[x][y] = [
-                int('0x' + color[0], base=16),
-                int('0x' + color[1], base=16),
-                int('0x' + color[2], base=16),
-            ]
+def add_beach(biome: str, height: float) -> str:
+    if 'forest' in biome and height < 150:
+        return 'beach'
     
-    return data
+    return biome
 
+def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
+    # https://upload.wikimedia.org/wikipedia/commons/6/68/Climate_influence_on_terrestrial_biome.svg
+    if not is_land:
+        return 'ocean'
+    
+    if temperature < 0:
+        return 'tundra'
+    
+    if temperature < 10 and precipitation > 50:
+        return 'boreal forest'
+    
+    if temperature < 10:
+        return 'grassland'
 
-data = add_noise(data)
+    if temperature < 20 and precipitation > 200:
+        return 'temperate rainforest'
+    
+    if temperature < 20 and precipitation > 100:
+        return 'seasonal forest'
+    
+    if temperature < 20 and precipitation > 50:
+        return 'woodland'
+    
+    if temperature < 20:
+        return 'grassland'
+    
+    if precipitation > 250:
+        return 'tropical rainforest'
+    
+    if precipitation > 50:
+        return 'savanna'
+    
+    return 'desert'
 
-# Generate perlin noise normal distributions
-# plt.hist(noise_vals, bins=20, histtype = 'bar', facecolor = 'blue')
-# plt.show()
+biome_color = {
+    'ocean': '134074',
+    'tundra': '669bbc',
+    'boreal forest': '4f772d',
+    'grassland': '90a955',
+    'temperate rainforest': '31572c',
+    'seasonal forest': '606c38',
+    'woodland': '283618',
+    'tropical rainforest': '132a13',
+    'savanna': 'bb9457',
+    'beach': 'e9c46a'
+}
 
+def init_df() -> pd.DataFrame:
+    df = pd.DataFrame(
+        columns = [
+            'x', 
+            'y',
+            'height',
+            'precipitation',
+            'temperature',
+            'is_land',
+            'biome',
+            'color'
+        ]
+    )
 
-np_data = np.array(data)
+    # initialize cells
+    print('initializing')
+    df['x'] = pd.Series([i for i in range(size_x) for _ in range(size_y)])
+    df['y'] = pd.Series([i for _ in range(size_x) for i in range(size_y)])
+
+    # add noise
+    print('adding height noise')
+    df['height'] = df.apply(lambda row: height_noise([row['x']/size_x, row['y']/size_y]), axis=1)
+    print('adding precipitation noise')
+    df['precipitation'] = df.apply(lambda row: temperature_noise([row['x']/size_x, row['y']/size_y]), axis=1)
+    print('adding temperature noise')
+    df['temperature'] = df.apply(lambda row: precipitation_noise([row['x']/size_x, row['y']/size_y]), axis=1)
+
+    print('normalizing ranges')
+    df['height'] = df.apply(lambda row: update_range(row['height'], -0.7, 0.7, -11000, 9000), axis=1)
+    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], -0.7, 0.7, 0, 500), axis=1)
+    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], -0.7, 0.7, -10, 30), axis=1)
+    
+    print('checking the temperature')
+    # update temperature based on latitude
+    df['temperature'] = df.apply(lambda row: row['temperature'] + equator_temp(row['x']), axis=1)
+    # update temperature based on height
+    df['temperature'] = df.apply(lambda row: row['temperature'] - row['height']/2000, axis=1)
+
+    # set is_land
+    print('finding land')
+    df['is_land'] = df.apply(lambda row: row['height'] > 0, axis=1)
+
+    # set biome
+    print('setting biome')
+    df["biome"] = df.apply(lambda row: get_biome(row['is_land'], row['temperature'], row['precipitation']), axis=1)
+
+    # add beaches
+    print('going to the beach')
+    df['biome'] = df.apply(lambda row: add_beach(row['biome'], row['height']), axis=1)
+
+    # set color
+    print('setting color')
+    df["color"] = df.apply(lambda row: biome_color[row['biome']], axis=1)
+
+    # save
+    df.to_pickle('world_data.pickle')
+    return df
+
+df = init_df()
+# df = pd.read_pickle('world_data.pickle')
+
+print('converting data to pixels')
+image_data = [[[13,40,74] for _ in range(size_x)] for _ in range(size_y)]
+for _, row in tqdm.tqdm(df[df['is_land']].iterrows()):
+    image_data[row['x']][row['y']] = [
+        int('0x' + row['color'][0:2], 16),
+        int('0x' + row['color'][2:4], 16),
+        int('0x' + row['color'][4:6], 16)
+    ]
+
+# write the results to an image
+np_data = np.array(image_data)
 im = Image.fromarray(np_data.astype(np.uint8))
 im.save("./render/client/images/grid512.jpg")
