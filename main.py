@@ -6,7 +6,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import tqdm
 
-size_x, size_y = 512, 512
+size_x, size_y = 512*2, 512*2
 height_noise = PerlinNoise(octaves=6)
 temperature_noise = PerlinNoise(octaves=6)
 precipitation_noise = PerlinNoise(octaves=6)
