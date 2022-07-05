@@ -11,6 +11,18 @@ height_noise = PerlinNoise(octaves=6)
 temperature_noise = PerlinNoise(octaves=6)
 precipitation_noise = PerlinNoise(octaves=6)
 
+# normalizing range values
+update_range = lambda val, old_min, old_max, new_min, new_max: (((val - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
+
+# get closeness to equator
+def equator_temp(y: int, temperature: float) -> float:
+    """needs to consider negative temps"""
+    equator = size_y/2
+    percent = (y % equator) / equator
+    category = percent / 10
+    bonus = category * 1.5
+    return -5 + bonus
+
 def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
     # https://upload.wikimedia.org/wikipedia/commons/6/68/Climate_influence_on_terrestrial_biome.svg
     if not is_land:
@@ -46,7 +58,7 @@ def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
     return 'desert'
 
 biome_color = {
-    'ocean': '003049',
+    'ocean': '134074',
     'tundra': '669bbc',
     'boreal forest': '4f772d',
     'grassland': '90a955',
@@ -84,15 +96,16 @@ def init_df() -> pd.DataFrame:
     print('adding temperature noise')
     df['temperature'] = df.apply(lambda row: precipitation_noise([row['x']/size_x, row['y']/size_y]), axis=1)
 
-    # normalizing range values
-    update_range = lambda val, old_min, old_max, new_min, new_max: (((val - old_min) * (new_max - new_min)) / (old_max - old_min)) + new_min
-
     print('normalizing ranges')
     df['height'] = df.apply(lambda row: update_range(row['height'], -0.7, 0.7, -11000, 9000), axis=1)
     df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], -0.7, 0.7, 0, 500), axis=1)
     df['temperature'] = df.apply(lambda row: update_range(row['temperature'], -0.7, 0.7, -10, 30), axis=1)
-
-    # TODO: update temperature based on height and latitude
+    
+    print('temperature tweaks')
+    # update temperature based on latitude
+    df['temperature'] = df.apply(lambda row: row['temperature'] + equator_temp(row['y'], row['temperature']), axis=1)
+    # update temperature based on height
+    df['temperature'] = df.apply(lambda row: row['temperature'] - row['height']/2000, axis=1)
 
     # set is_land
     print('setting is_land')
@@ -110,12 +123,11 @@ def init_df() -> pd.DataFrame:
     df.to_pickle('world_data.pickle')
     return df
 
-# df = init_df()
-df = pd.read_pickle('world_data.pickle')
+df = init_df()
+# df = pd.read_pickle('world_data.pickle')
 
 print('converting data to pixels')
-# image_data = [[[00,30,49]]*size_x]*size_y
-image_data = [[[00,30,49] for _ in range(size_x)] for _ in range(size_y)]
+image_data = [[[13,40,74] for _ in range(size_x)] for _ in range(size_y)]
 for _, row in tqdm.tqdm(df[df['is_land']].iterrows()):
     image_data[row['x']][row['y']] = [
         int('0x' + row['color'][0:2], 16),
