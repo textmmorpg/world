@@ -4,6 +4,7 @@ from random import random
 from perlin_noise import PerlinNoise
 import pandas as pd
 import matplotlib.pyplot as plt
+import tqdm
 
 size_x, size_y = 512, 512
 height_noise = PerlinNoise(octaves=6)
@@ -45,15 +46,15 @@ def get_biome(is_land: bool, temperature: float, precipitation: float) -> str:
     return 'desert'
 
 biome_color = {
-    'ocean': '#003049',
-    'tundra': '#669bbc',
-    'boreal forest': '#4f772d',
-    'grassland': '#90a955',
-    'temperate rainforest': '#31572c',
-    'seasonal forest': '#90a955',
-    'woodland': '#90a955',
-    'tropical rainforest': '#132a13',
-    'savanna': '#bb9457'
+    'ocean': '003049',
+    'tundra': '669bbc',
+    'boreal forest': '4f772d',
+    'grassland': '90a955',
+    'temperate rainforest': '31572c',
+    'seasonal forest': '90a955',
+    'woodland': '90a955',
+    'tropical rainforest': '132a13',
+    'savanna': 'bb9457'
 }
 
 def init_df() -> pd.DataFrame:
@@ -109,13 +110,20 @@ def init_df() -> pd.DataFrame:
     df.to_pickle('world_data.pickle')
     return df
 
-df = init_df()
-# df = pd.read_pickle('world_data.pickle')
+# df = init_df()
+df = pd.read_pickle('world_data.pickle')
 
-# image_data = []
+print('converting data to pixels')
+# image_data = [[[00,30,49]]*size_x]*size_y
+image_data = [[[00,30,49] for _ in range(size_x)] for _ in range(size_y)]
+for _, row in tqdm.tqdm(df[df['is_land']].iterrows()):
+    image_data[row['x']][row['y']] = [
+        int('0x' + row['color'][0:2], 16),
+        int('0x' + row['color'][2:4], 16),
+        int('0x' + row['color'][4:6], 16)
+    ]
 
-
-# # write the results to an image
-# np_data = np.array(height_map)
-# im = Image.fromarray(np_data.astype(np.uint8))
-# im.save("./render/client/images/grid512.jpg")
+# write the results to an image
+np_data = np.array(image_data)
+im = Image.fromarray(np_data.astype(np.uint8))
+im.save("./render/client/images/grid512.jpg")
