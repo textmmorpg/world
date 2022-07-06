@@ -1,6 +1,7 @@
 node_modules/
 package-lock.json
 *.pickle
+*.jpg
 
 # local env files
 .env.local
