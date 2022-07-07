@@ -57,7 +57,7 @@ function init() {
     scene.add( globe_mesh );
 
     // add user location indicator
-    const texture_cursor = new THREE.TextureLoader().load( 'textures/cursor.png', render );
+    const texture_cursor = new THREE.TextureLoader().load( 'textures/cursor2.png', render );
     texture_cursor.anisotropy = renderer.capabilities.getMaxAnisotropy();
 
     const cursor = new THREE.SphereGeometry( 5, 5, 5 );
