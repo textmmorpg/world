@@ -21,21 +21,7 @@ noise_data = [
     [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
 ]
 
-# with open('../noise/simplex1.pickle', 'rb') as f:
-#     data1 = pickle.load(f)
-
-# with open('../noise/simplex2.pickle', 'rb') as f:
-#     data2 = pickle.load(f)
-
-# with open('../noise/simplex3.pickle', 'rb') as f:
-#     data3 = pickle.load(f)
-
-# noise_data = [
-#     data1, data2, data3
-# ]
-
 def noise(x, y, z, i):
-    # print(f'{noise} - {x},{y},{z}')
     return noise_data[i][x][y][z]
 
 def parallelize_dataframe(df, func, n_cores=6):
@@ -65,8 +51,8 @@ biome_color = {
 
 def asCartesian(rthetaphi):
     # convert from pixel height to polar coordinate
-    theta   = update_range(rthetaphi[1], 0, size_x, 0, math.pi*2)
-    phi     = update_range(rthetaphi[2], 0, size_y, 0, math.pi*2)
+    theta = update_range(rthetaphi[1], 0, size_x, -math.pi, math.pi)
+    phi = update_range(rthetaphi[2], 0, size_y, -math.pi, math.pi)
     r = rthetaphi[0]
 
     #takes list rthetaphi (single coord)
@@ -213,17 +199,40 @@ def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     print(datetime.now().strftime("%H:%M:%S"))
     return df
 
-df = init_df()
-df = add_3d_coords(df)
-df.to_pickle('tmp.pickle')
+def run():
+    df = init_df()
+    df = add_3d_coords(df)
+    df.to_pickle('tmp.pickle')
 
-df = pd.read_pickle('tmp.pickle')
-df = add_height_noise(df)
-df.to_pickle('tmp2.pickle')
-df = add_precipitation_noise(df)
-df.to_pickle('tmp3.pickle')
-df = add_temperature_noise(df)
-df.to_pickle('tmp4.pickle')
+    df = pd.read_pickle('tmp.pickle')
+    df = add_height_noise(df)
+    df.to_pickle('tmp2.pickle')
+    df = add_precipitation_noise(df)
+    df.to_pickle('tmp3.pickle')
+    df = add_temperature_noise(df)
+    df.to_pickle('tmp4.pickle')
+    df = other_processing(df)
+    df.to_pickle('biomes.pickle')
+    return df
+
+def write_map(df):
+    print('converting data to pixels')
+    image_data = [[[13,40,74] for _ in range(512)] for _ in range(512)]
+    for _, row in tqdm.tqdm(df.iterrows()):
+        x = update_range(row['x'], 0, size_x, 0, 512)
+        y = update_range(row['y'], 0, size_x, 0, 512)
+        image_data[int(x)][int(y)] = [
+            int('0x' + row['color'][0:2], 16),
+            int('0x' + row['color'][2:4], 16),
+            int('0x' + row['color'][4:6], 16)
+        ]
+
+    # write the results to an image
+    np_data = np.array(image_data)
+    im = Image.fromarray(np_data.astype(np.uint8))
+    im.save("./render/client/images/grid512.jpg")
+
+    print(datetime.now().strftime("%H:%M:%S"))
 
 # df = pd.read_pickle('tmp4.pickle')
 # df.hist(bins=100)
@@ -234,42 +243,7 @@ df.to_pickle('tmp4.pickle')
 # df.to_csv('data.csv')
 # exit()
 
-df = other_processing(df)
-df.to_pickle('biomes.pickle')
-
-
 # df = pd.read_pickle('biomes.pickle')
-print('converting data to pixels')
-image_data = [[[13,40,74] for _ in range(512)] for _ in range(512)]
-extra_x, extra_y = 0, 0
-for _, row in tqdm.tqdm(df.iterrows()):
-    for x in range(5):
-        for y in range(5):
-            image_data[row['x']*5+x+extra_x][row['y']*5+y+extra_y] = [
-                int('0x' + row['color'][0:2], 16),
-                int('0x' + row['color'][2:4], 16),
-                int('0x' + row['color'][4:6], 16)
-            ]
 
-    # if extra_x < 6 and row['x'] % 20 == 0:
-    #     extra_x += 1
-    #     image_data[row['x']*5+x+extra_x][row['y']*5+y+extra_y] = [
-    #         int('0x' + row['color'][0:2], 16),
-    #         int('0x' + row['color'][2:4], 16),
-    #         int('0x' + row['color'][4:6], 16)
-    #     ]
-        
-    # if extra_y < 6 and row['y'] % 20 == 0:
-    #     extra_y += 1
-    #     image_data[row['x']*5+x+extra_x][row['y']*5+y+extra_y] = [
-    #         int('0x' + row['color'][0:2], 16),
-    #         int('0x' + row['color'][2:4], 16),
-    #         int('0x' + row['color'][4:6], 16)
-    #     ]
-
-# write the results to an image
-np_data = np.array(image_data)
-im = Image.fromarray(np_data.astype(np.uint8))
-im.save("./render/client/images/grid512.jpg")
-
-print(datetime.now().strftime("%H:%M:%S"))
+df = run()
+write_map(df)
