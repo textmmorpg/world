@@ -10,16 +10,16 @@ from random import random
 import pickle
 import cv2
 
-size_x, size_y = 200, 200
-radius = 100
+size_x, size_y = 250, 250
+radius = 125
 
 print(datetime.now().strftime("%H:%M:%S"))
 print("loading noise data")
 
 noise_data = [
-    [pickle.load(open('../noise/noise1/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
-    [pickle.load(open('../noise/noise2/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
-    [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
+    [pickle.load(open('../noise/noise1/' + str(i) + '.pickle', 'rb')) for i in range(size_x)],
+    [pickle.load(open('../noise/noise2/' + str(i) + '.pickle', 'rb')) for i in range(size_x)],
+    [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(size_x)],
 ]
 
 def noise(x, y, z, i):
