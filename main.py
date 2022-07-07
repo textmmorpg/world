@@ -10,8 +10,8 @@ from random import random
 import pickle
 import cv2
 
-size_x, size_y = 100, 100
-radius = 50
+size_x, size_y = 200, 200
+radius = 100
 
 print(datetime.now().strftime("%H:%M:%S"))
 print("loading noise data")
@@ -60,9 +60,9 @@ def asCartesian(rthetaphi):
     y = r * math.sin( theta ) * math.sin( phi )
     z = r * math.cos( theta )
     
-    x = update_range(x, -math.pi, math.pi, 0, 100)
-    y = update_range(y, -math.pi, math.pi, 0, 100)
-    z = update_range(z, -math.pi, math.pi, 0, 100)
+    x = update_range(x, -math.pi, math.pi, 0, size_x)
+    y = update_range(y, -math.pi, math.pi, 0, size_x)
+    z = update_range(z, -math.pi, math.pi, 0, size_x)
 
     return [int(x),int(y),int(z)]
 
