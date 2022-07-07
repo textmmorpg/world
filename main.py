@@ -7,10 +7,11 @@ from sympy import *
 import math
 from datetime import datetime
 from multiprocessing import Pool
+from random import random
 import pickle
 
 size_x, size_y = 100, 100
-radius = 50
+radius = 40
 
 print(datetime.now().strftime("%H:%M:%S"))
 print("loading noise data")
@@ -20,8 +21,14 @@ noise_data = [
     [pickle.load(open('../noise/noise2/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
     [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
 ]
+
 def noise(x, y, z, i):
-    return noise_data[i][int(x)][int(y)][int(z)]
+    varry1 = int(random() * 6 - 3)
+    varry2 = int(random() * 6 - 3)
+    varry3 = int(random() * 6 - 3)
+    noise = noise_data[i][x + varry1][y + varry2][z + varry3]
+    print(f'{noise} - {x},{y},{z}')
+    return noise
 
 def parallelize_dataframe(df, func, n_cores=6):
     df_split = np.array_split(df, n_cores)
@@ -59,7 +66,7 @@ def asCartesian(rthetaphi):
     x = r * sin( theta ) * cos( phi )
     y = r * sin( theta ) * sin( phi )
     z = r * cos( theta )
-    return [x,y,z]
+    return [int(x),int(y),int(z)]
 
 # get closeness to equator
 def equator_temp(x: int) -> float:
@@ -194,28 +201,29 @@ def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     print(datetime.now().strftime("%H:%M:%S"))
     return df
 
-df = init_df()
-df = add_3d_coords(df)
-df.to_pickle('tmp.pickle')
-df = add_height_noise(df)
-df.to_pickle('tmp2.pickle')
-df = add_precipitation_noise(df)
-df.to_pickle('tmp3.pickle')
-df = add_temperature_noise(df)
-df.to_pickle('tmp4.pickle')
-# df = pd.read_pickle('tmp4.pickle')
-df['height'].hist()
-plt.savefig('heightplot.jpg')
-df = other_processing(df)
-df.to_pickle('biomes.pickle')
+# df = init_df()
+# df = add_3d_coords(df)
+# df.to_pickle('tmp.pickle')
+# df = add_height_noise(df)
+# df.to_pickle('tmp2.pickle')
+# df = add_precipitation_noise(df)
+# df.to_pickle('tmp3.pickle')
+# df = add_temperature_noise(df)
+# df.to_pickle('tmp4.pickle')
+# # df = pd.read_pickle('tmp4.pickle')
+# df.hist(bins=100)
+# plt.savefig('heightplot.jpg')
+# df = other_processing(df)
+# df.to_pickle('biomes.pickle')
 
 
+df = pd.read_pickle('biomes.pickle')
 print('converting data to pixels')
 image_data = [[[13,40,74] for _ in range(size_x*5)] for _ in range(size_y*5)]
 for _, row in tqdm.tqdm(df.iterrows()):
     for x in range(5):
         for y in range(5):
-            image_data[row['x']+x][row['y']+y] = [
+            image_data[row['x']*5+x][row['y']*5+y] = [
                 int('0x' + row['color'][0:2], 16),
                 int('0x' + row['color'][2:4], 16),
                 int('0x' + row['color'][4:6], 16)
