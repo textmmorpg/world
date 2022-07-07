@@ -204,7 +204,7 @@ def run():
     df = add_3d_coords(df)
     df.to_pickle('tmp.pickle')
 
-    df = pd.read_pickle('tmp.pickle')
+    # df = pd.read_pickle('tmp.pickle')
     df = add_height_noise(df)
     df.to_pickle('tmp2.pickle')
     df = add_precipitation_noise(df)
@@ -218,14 +218,16 @@ def run():
 def write_map(df):
     print('converting data to pixels')
     image_data = [[[13,40,74] for _ in range(512)] for _ in range(512)]
-    for _, row in tqdm.tqdm(df.iterrows()):
-        x = update_range(row['x'], 0, size_x, 0, 512)
-        y = update_range(row['y'], 0, size_x, 0, 512)
-        image_data[int(x)][int(y)] = [
-            int('0x' + row['color'][0:2], 16),
-            int('0x' + row['color'][2:4], 16),
-            int('0x' + row['color'][4:6], 16)
-        ]
+    for x_i in tqdm.tqdm(range(512)):
+        for y_i in range(512):
+            x = int(update_range(x_i, 0, 512, 0, size_x))
+            y = int(update_range(y_i, 0, 512, 0, size_y))
+            color = df[(df['x'] == x) & (df['y'] == y)].head(1).color.item()
+            image_data[x_i][y_i] = [
+                int('0x' + color[0:2], 16),
+                int('0x' + color[2:4], 16),
+                int('0x' + color[4:6], 16)
+            ]
 
     # write the results to an image
     np_data = np.array(image_data)
@@ -234,16 +236,6 @@ def write_map(df):
 
     print(datetime.now().strftime("%H:%M:%S"))
 
-# df = pd.read_pickle('tmp4.pickle')
-# df.hist(bins=100)
-# plt.savefig('heightplot.jpg')
-# exit()
-
-# df = pd.read_pickle('tmp4.pickle')
-# df.to_csv('data.csv')
-# exit()
-
-# df = pd.read_pickle('biomes.pickle')
-
-df = run()
+# df = run()
+df = pd.read_pickle('biomes.pickle')
 write_map(df)
