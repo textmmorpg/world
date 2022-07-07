@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import tqdm
-from sympy import *
 import math
 from datetime import datetime
 from multiprocessing import Pool
@@ -11,24 +10,37 @@ from random import random
 import pickle
 
 size_x, size_y = 100, 100
-radius = 40
+radius = 50
 
 print(datetime.now().strftime("%H:%M:%S"))
 print("loading noise data")
 
+# noise_data = [
+#     [pickle.load(open('../noise/noise1/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
+#     [pickle.load(open('../noise/noise2/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
+#     [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
+# ]
+
+with open('../noise/simplex1.pickle', 'rb') as f:
+    data1 = pickle.load(f)
+
+with open('../noise/simplex2.pickle', 'rb') as f:
+    data2 = pickle.load(f)
+
+with open('../noise/simplex3.pickle', 'rb') as f:
+    data3 = pickle.load(f)
+
 noise_data = [
-    [pickle.load(open('../noise/noise1/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
-    [pickle.load(open('../noise/noise2/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
-    [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(radius*2)],
+    data1, data2, data3
 ]
 
 def noise(x, y, z, i):
-    varry1 = int(random() * 6 - 3)
-    varry2 = int(random() * 6 - 3)
-    varry3 = int(random() * 6 - 3)
-    noise = noise_data[i][x + varry1][y + varry2][z + varry3]
-    print(f'{noise} - {x},{y},{z}')
-    return noise
+    # varry1 = int(random() * 10)
+    # varry2 = int(random() * 10)
+    # varry3 = int(random() * 10)
+    # noise = noise_data[i][x - varry1][y - varry2][z - varry3]
+    # print(f'{noise} - {x},{y},{z}')
+    return noise_data[i][x][y][z]
 
 def parallelize_dataframe(df, func, n_cores=6):
     df_split = np.array_split(df, n_cores)
@@ -54,19 +66,20 @@ biome_color = {
     'beach': 'e9c46a'
 }
 
+# TODO: something wrong here
 def asCartesian(rthetaphi):
     # convert from pixel height to polar coordinate
-    theta   = update_range(rthetaphi[1], 0, size_x, 0, math.pi*2)
-    phi     = update_range(rthetaphi[2], 0, size_y, 0, math.pi)
+    theta   = update_range(rthetaphi[1], 0, size_x, 0, math.pi)
+    phi     = update_range(rthetaphi[2], 0, size_y, 0, math.pi*2)
 
     #takes list rthetaphi (single coord)
     r       = rthetaphi[0]
-    theta   = theta * pi/180 # to radian
-    phi     = phi * pi/180
-    x = r * sin( theta ) * cos( phi )
-    y = r * sin( theta ) * sin( phi )
-    z = r * cos( theta )
-    return [int(x),int(y),int(z)]
+    theta   = theta * math.pi/180 # to radian
+    phi     = phi * math.pi/180
+    x = r * math.sin( theta ) * math.cos( phi )
+    y = r * math.sin( theta ) * math.sin( phi )
+    z = r * math.cos( theta )
+    return [int(x*1000),int(y*1000),int(z*1000)]
 
 # get closeness to equator
 def equator_temp(x: int) -> float:
@@ -141,7 +154,7 @@ def add_3d_coords(df: pd.DataFrame) -> pd.DataFrame:
 
     print(datetime.now().strftime("%H:%M:%S"))
     print('adding 3D cartesian coordinates')
-    df['3D'] = df.apply(lambda row: asCartesian([radius, row['x'], row['y']]), axis=1)
+    df['3D'] = df.apply(lambda row: asCartesian([1, row['x'], row['y']]), axis=1)
     return df
 
 def add_height_noise(df: pd.DataFrame) -> pd.DataFrame:
@@ -166,9 +179,9 @@ def add_temperature_noise(df: pd.DataFrame) -> pd.DataFrame:
 def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     print(datetime.now().strftime("%H:%M:%S"))
     print('normalizing ranges')
-    df['height'] = df.apply(lambda row: update_range(row['height'], 0, 1, -11000, 9000), axis=1)
-    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], 0, 1, 0, 500), axis=1)
-    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], 0, 1, -10, 30), axis=1)
+    df['height'] = df.apply(lambda row: update_range(row['height'], -0.7, 0.7, -11000, 9000), axis=1)
+    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], -0.7, 0.7, 0, 500), axis=1)
+    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], -0.7, 0.7, -10, 30), axis=1)
     
     print(datetime.now().strftime("%H:%M:%S"))
     print('checking the temperature')
@@ -204,30 +217,55 @@ def other_processing(df: pd.DataFrame) -> pd.DataFrame:
 # df = init_df()
 # df = add_3d_coords(df)
 # df.to_pickle('tmp.pickle')
-# df = add_height_noise(df)
-# df.to_pickle('tmp2.pickle')
-# df = add_precipitation_noise(df)
-# df.to_pickle('tmp3.pickle')
-# df = add_temperature_noise(df)
-# df.to_pickle('tmp4.pickle')
-# # df = pd.read_pickle('tmp4.pickle')
-# df.hist(bins=100)
-# plt.savefig('heightplot.jpg')
-# df = other_processing(df)
-# df.to_pickle('biomes.pickle')
+
+df = pd.read_pickle('tmp.pickle')
+df = add_height_noise(df)
+df.to_pickle('tmp2.pickle')
+df = add_precipitation_noise(df)
+df.to_pickle('tmp3.pickle')
+df = add_temperature_noise(df)
+df.to_pickle('tmp4.pickle')
+
+# df = pd.read_pickle('tmp4.pickle')
+# # df.hist(bins=100)
+# # plt.savefig('heightplot.jpg')
+# # exit()
+
+# df.to_csv('data.csv')
+# exit()
+
+df = other_processing(df)
+df.to_pickle('biomes.pickle')
 
 
-df = pd.read_pickle('biomes.pickle')
+# df = pd.read_pickle('biomes.pickle')
 print('converting data to pixels')
-image_data = [[[13,40,74] for _ in range(size_x*5)] for _ in range(size_y*5)]
+image_data = [[[13,40,74] for _ in range(512)] for _ in range(512)]
+extra_x, extra_y = 0, 0
 for _, row in tqdm.tqdm(df.iterrows()):
     for x in range(5):
         for y in range(5):
-            image_data[row['x']*5+x][row['y']*5+y] = [
+            image_data[row['x']*5+x+extra_x][row['y']*5+y+extra_y] = [
                 int('0x' + row['color'][0:2], 16),
                 int('0x' + row['color'][2:4], 16),
                 int('0x' + row['color'][4:6], 16)
             ]
+
+    if extra_x < 6 and row['x'] % 20 == 0:
+        extra_x += 1
+        image_data[row['x']*5+x+extra_x][row['y']*5+y+extra_y] = [
+            int('0x' + row['color'][0:2], 16),
+            int('0x' + row['color'][2:4], 16),
+            int('0x' + row['color'][4:6], 16)
+        ]
+        
+    if extra_y < 6 and row['y'] % 20 == 0:
+        extra_y += 1
+        image_data[row['x']*5+x+extra_x][row['y']*5+y+extra_y] = [
+            int('0x' + row['color'][0:2], 16),
+            int('0x' + row['color'][2:4], 16),
+            int('0x' + row['color'][4:6], 16)
+        ]
 
 # write the results to an image
 np_data = np.array(image_data)
