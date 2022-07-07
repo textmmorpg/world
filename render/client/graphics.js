@@ -5,11 +5,30 @@ import { OrbitControls } from './jsm/controls/OrbitControls.js';
 let cameraPersp, cameraOrtho, currentCamera;
 let scene, renderer, orbit;
 let sphere;
+let user_lat, user_long, user_rotation;
+let user_x, user_y, user_z;
 
 init();
 render();
 
+function asCartesian(r, theta, phi) {
+    const x = r * Math.sin(theta) * Math.cos(phi)
+    const y = r * Math.sin(theta) * Math.sin(phi)
+    const z = r * Math.cos(theta)
+    return [x, y, z]
+}
+
 function init() {
+
+    // get user location
+    const urlParams = new URLSearchParams(window.location.search);
+    user_lat = urlParams.get('lat');
+    user_long = urlParams.get('long');
+    user_rotation = urlParams.get('rotation');
+    const cartesian = asCartesian(200, user_lat, user_long);
+    user_x = cartesian[0]
+    user_y = cartesian[1]
+    user_z = cartesian[2]
 
     renderer = new THREE.WebGLRenderer();
     renderer.setPixelRatio( window.devicePixelRatio );
@@ -45,7 +64,9 @@ function init() {
     const cursor_material = new THREE.MeshLambertMaterial( { map: texture_cursor, transparent: true } );
     const cursor_mesh = new THREE.Mesh( cursor, cursor_material )
     scene.add( cursor_mesh );
-    cursor_mesh.position.set(200,0,0);
+    cursor_mesh.position.set(user_x, user_y, user_z);
+
+    // todo: rotate cursor to where the user is facing
 
     // add lighting
 
