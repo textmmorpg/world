@@ -8,6 +8,7 @@ from datetime import datetime
 from multiprocessing import Pool
 from random import random
 import pickle
+import cv2
 
 size_x, size_y = 100, 100
 radius = 50
@@ -51,11 +52,10 @@ biome_color = {
 
 def asCartesian(rthetaphi):
     # convert from pixel height to polar coordinate
-    theta = update_range(rthetaphi[1], 0, size_x, -math.pi, math.pi)
-    phi = update_range(rthetaphi[2], 0, size_y, -math.pi, math.pi)
+    theta = update_range(rthetaphi[1], 0, size_x, 0, math.pi)
+    phi = update_range(rthetaphi[2], 0, size_y, 0, math.pi * 2)
     r = rthetaphi[0]
 
-    #takes list rthetaphi (single coord)
     x = r * math.sin( theta ) * math.cos( phi )
     y = r * math.sin( theta ) * math.sin( phi )
     z = r * math.cos( theta )
@@ -164,9 +164,9 @@ def add_temperature_noise(df: pd.DataFrame) -> pd.DataFrame:
 def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     print(datetime.now().strftime("%H:%M:%S"))
     print('normalizing ranges')
-    df['height'] = df.apply(lambda row: update_range(row['height'], 0.3, 0.6, -11000, 9000), axis=1)
-    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], 0.3, 0.6, 0, 500), axis=1)
-    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], 0.3, 0.6, -10, 30), axis=1)
+    df['height'] = df.apply(lambda row: update_range(row['height'], 0, 1, -11000, 9000), axis=1)
+    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], 0, 1, 0, 500), axis=1)
+    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], 0, 1, -10, 30), axis=1)
     
     print(datetime.now().strftime("%H:%M:%S"))
     print('checking the temperature')
@@ -216,26 +216,28 @@ def run():
     return df
 
 def write_map(df):
-    print('converting data to pixels')
-    image_data = [[[13,40,74] for _ in range(512)] for _ in range(512)]
-    for x_i in tqdm.tqdm(range(512)):
-        for y_i in range(512):
-            x = int(update_range(x_i, 0, 512, 0, size_x))
-            y = int(update_range(y_i, 0, 512, 0, size_y))
-            color = df[(df['x'] == x) & (df['y'] == y)].head(1).color.item()
-            image_data[x_i][y_i] = [
-                int('0x' + color[0:2], 16),
-                int('0x' + color[2:4], 16),
-                int('0x' + color[4:6], 16)
-            ]
+    print('writing image')
+    image_data = [[[13,40,74] for _ in range(size_x)] for _ in range(size_y)]
+    for _, row in df.iterrows():
+        image_data[row['x']][row['y']] = [
+            int('0x' + row['color'][0:2], 16),
+            int('0x' + row['color'][2:4], 16),
+            int('0x' + row['color'][4:6], 16)
+        ]
 
     # write the results to an image
     np_data = np.array(image_data)
     im = Image.fromarray(np_data.astype(np.uint8))
-    im.save("./render/client/images/grid512.jpg")
-
+    im.save("./render/client/images/grid100.jpg")
     print(datetime.now().strftime("%H:%M:%S"))
 
-# df = run()
-df = pd.read_pickle('biomes.pickle')
+    print('scaling image')
+    img = cv2.imread("./render/client/images/grid100.jpg", 1)
+    ratio = 512/size_x
+    large_image = cv2.resize(img, (0, 0), fx=ratio, fy=ratio)
+    cv2.imwrite("./render/client/images/grid512.jpg", large_image)
+
+
+df = run()
+# df = pd.read_pickle('biomes.pickle')
 write_map(df)
