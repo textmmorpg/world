@@ -213,7 +213,7 @@ def run():
     df.to_pickle('tmp4.pickle')
     df = other_processing(df)
     df.to_pickle('biomes.pickle')
-    df.to_json('biomes.json')
+    df.to_json('biomes.json', orient='table')
     return df
 
 def write_map(df):
