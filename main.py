@@ -213,6 +213,7 @@ def run():
     df.to_pickle('tmp4.pickle')
     df = other_processing(df)
     df.to_pickle('biomes.pickle')
+    df.to_json('biomes.json')
     return df
 
 def write_map(df):
@@ -228,14 +229,14 @@ def write_map(df):
     # write the results to an image
     np_data = np.array(image_data)
     im = Image.fromarray(np_data.astype(np.uint8))
-    im.save("./render/client/images/grid100.jpg")
+    im.save("./render/client/textures/grid100.jpg")
     print(datetime.now().strftime("%H:%M:%S"))
 
     print('scaling image')
-    img = cv2.imread("./render/client/images/grid100.jpg", 1)
+    img = cv2.imread("./render/client/textures/grid100.jpg", 1)
     ratio = 512/size_x
     large_image = cv2.resize(img, (0, 0), fx=ratio, fy=ratio)
-    cv2.imwrite("./render/client/images/grid512.jpg", large_image)
+    cv2.imwrite("./render/client/textures/grid512.jpg", large_image)
 
 
 df = run()
