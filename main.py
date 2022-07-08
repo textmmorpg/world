@@ -52,8 +52,8 @@ biome_color = {
 
 def asCartesian(rthetaphi):
     # convert from pixel height to polar coordinate
-    theta = update_range(rthetaphi[1], 0, size_x, 0, math.pi)
-    phi = update_range(rthetaphi[2], 0, size_y, 0, math.pi * 2)
+    theta = rthetaphi[1]
+    phi = rthetaphi[2]
     r = rthetaphi[0]
 
     x = r * math.sin( theta ) * math.cos( phi )
@@ -139,7 +139,10 @@ def add_3d_coords(df: pd.DataFrame) -> pd.DataFrame:
 
     print(datetime.now().strftime("%H:%M:%S"))
     print('adding 3D cartesian coordinates')
-    df['3D'] = df.apply(lambda row: asCartesian([1, row['x'], row['y']]), axis=1)
+
+    df['lat'] = df.apply(lambda row: update_range(row['x'], 0, size_x, 0, math.pi), axis=1)
+    df['long'] = df.apply(lambda row: update_range(row['y'], 0, size_x, 0, math.pi * 2), axis=1)
+    df['3D'] = df.apply(lambda row: asCartesian([1, row['lat'], row['long']]), axis=1)
     return df
 
 def add_height_noise(df: pd.DataFrame) -> pd.DataFrame:
@@ -213,7 +216,11 @@ def run():
     df.to_pickle('tmp4.pickle')
     df = other_processing(df)
     df.to_pickle('biomes.pickle')
-    df.to_json('biomes.json', orient='table')
+
+    # output results
+    df_out = df.drop(['color', '3D', 'x', 'y'], axis=1)
+    df_out.to_json('biomes.json', orient='table', index=False)
+    
     return df
 
 def write_map(df):
