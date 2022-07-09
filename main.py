@@ -10,20 +10,19 @@ from random import random
 import pickle
 import cv2
 
-size_x, size_y = 250, 250
-radius = 125
+size_x, size_y = 500, 500
+radius = 250
 
 print(datetime.now().strftime("%H:%M:%S"))
 print("loading noise data")
 
-noise_data = [
-    [pickle.load(open('../noise/noise1/' + str(i) + '.pickle', 'rb')) for i in range(size_x)],
-    [pickle.load(open('../noise/noise2/' + str(i) + '.pickle', 'rb')) for i in range(size_x)],
-    [pickle.load(open('../noise/noise3/' + str(i) + '.pickle', 'rb')) for i in range(size_x)],
-]
-
 def noise(x, y, z, i):
-    return noise_data[i][x][y][z]
+    chunk_size = 100
+    chunk_i = math.floor(x/chunk_size) + math.floor(y/chunk_size) + math.floor(z/chunk_size)
+    with open(f'../noise/noise{i+1}/{chunk_i + z%chunk_size}.pickle', 'rb') as f:
+        noise_data = pickle.load(f)
+
+    return noise_data[x%chunk_size][y%chunk_size]
 
 def parallelize_dataframe(df, func, n_cores=6):
     df_split = np.array_split(df, n_cores)
