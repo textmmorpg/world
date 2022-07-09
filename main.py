@@ -166,9 +166,9 @@ def add_temperature_noise(df: pd.DataFrame) -> pd.DataFrame:
 def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     print(datetime.now().strftime("%H:%M:%S"))
     print('normalizing ranges')
-    df['height'] = df.apply(lambda row: update_range(row['height'], 0, 1, -11000, 9000), axis=1)
-    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], 0, 1, 0, 500), axis=1)
-    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], 0, 1, -10, 30), axis=1)
+    df['height'] = df.apply(lambda row: update_range(row['height'], 0.35, 0.65, -11000, 9000), axis=1)
+    df['precipitation'] = df.apply(lambda row: update_range(row['precipitation'], 0.35, 0.65, 0, 500), axis=1)
+    df['temperature'] = df.apply(lambda row: update_range(row['temperature'], 0.35, 0.65, -10, 30), axis=1)
     
     print(datetime.now().strftime("%H:%M:%S"))
     print('checking the temperature')
@@ -202,17 +202,18 @@ def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def run():
-    df = init_df()
-    df = add_3d_coords(df)
-    df.to_pickle('tmp.pickle')
+    # df = init_df()
+    # df = add_3d_coords(df)
+    # df.to_pickle('tmp.pickle')
 
-    # df = pd.read_pickle('tmp.pickle')
-    df = add_height_noise(df)
-    df.to_pickle('tmp2.pickle')
-    df = add_precipitation_noise(df)
-    df.to_pickle('tmp3.pickle')
-    df = add_temperature_noise(df)
-    df.to_pickle('tmp4.pickle')
+    # df = add_height_noise(df)
+    # df.to_pickle('tmp2.pickle')
+    # df = add_precipitation_noise(df)
+    # df.to_pickle('tmp3.pickle')
+    # df = add_temperature_noise(df)
+    # df.to_pickle('tmp4.pickle')
+
+    df = pd.read_pickle('tmp4.pickle')
     df = other_processing(df)
     df.to_pickle('biomes.pickle')
 
