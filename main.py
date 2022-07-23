@@ -10,19 +10,21 @@ from random import random
 import pickle
 import cv2
 
-size_x, size_y = 500, 500
-radius = 250
+size_x, size_y = 400, 400
+radius = 200
 
 print(datetime.now().strftime("%H:%M:%S"))
 print("loading noise data")
 
 def noise(x, y, z, i):
     chunk_size = 100
-    chunk_i = math.floor(x/chunk_size) + math.floor(y/chunk_size) + math.floor(z/chunk_size)
-    with open(f'../noise/noise{i+1}/{chunk_i + z%chunk_size}.pickle', 'rb') as f:
+    chunk_x = math.floor(x/chunk_size)
+    chunk_y = math.floor(y/chunk_size)
+    chunk_z = math.floor(z/chunk_size)
+    with open(f'../noise/noise{i+1}/{chunk_x}_{chunk_y}_{chunk_z}.pickle', 'rb') as f:
         noise_data = pickle.load(f)
 
-    return noise_data[x%chunk_size][y%chunk_size]
+    return noise_data[x][y][z]
 
 def parallelize_dataframe(df, func, n_cores=6):
     df_split = np.array_split(df, n_cores)
@@ -202,16 +204,16 @@ def other_processing(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def run():
-    # df = init_df()
-    # df = add_3d_coords(df)
-    # df.to_pickle('tmp.pickle')
+    df = init_df()
+    df = add_3d_coords(df)
+    df.to_pickle('tmp.pickle')
 
-    # df = add_height_noise(df)
-    # df.to_pickle('tmp2.pickle')
-    # df = add_precipitation_noise(df)
-    # df.to_pickle('tmp3.pickle')
-    # df = add_temperature_noise(df)
-    # df.to_pickle('tmp4.pickle')
+    df = add_height_noise(df)
+    df.to_pickle('tmp2.pickle')
+    df = add_precipitation_noise(df)
+    df.to_pickle('tmp3.pickle')
+    df = add_temperature_noise(df)
+    df.to_pickle('tmp4.pickle')
 
     df = pd.read_pickle('tmp4.pickle')
     df = other_processing(df)
